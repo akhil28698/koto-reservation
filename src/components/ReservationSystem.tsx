@@ -220,7 +220,15 @@ const ReservationSystem: React.FC = () => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setActiveTab(0);
     resetForm();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+    });
   };
 
   const handleChairSelect = (chairId: number) => {
@@ -313,10 +321,14 @@ const ReservationSystem: React.FC = () => {
     setReservations(reservations.filter(r => r.id !== id));
   };
 
+  const handleDateChange = (dateStr: string) => {
+    setViewDate(parseISO(dateStr));
+  };
+
   const renderContent = () => {
     if (activeTab === 0) {
       return (
-        <VStack spacing={6} align="stretch">
+        <Box>
           <DateTimePicker
             selectedDate={selectedDate}
             selectedTime={selectedTime}
@@ -324,39 +336,37 @@ const ReservationSystem: React.FC = () => {
             onTimeSelect={handleTimeSelect}
             seatAvailability={seatAvailability}
           />
-          {selectedTime && (
-            <TableLayout
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              selectedChairs={selectedChairs}
-              onChairSelect={handleChairSelect}
-              reservations={reservations.map(res => ({
-                date: res.date,
-                time: res.time,
-                selectedChairs: res.selectedChairs
-              }))}
-            />
+          {selectedDate && selectedTime && (
+            <>
+              <TableLayout
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                selectedChairs={selectedChairs}
+                onChairSelect={handleChairSelect}
+                reservations={reservations.map(res => ({
+                  date: res.date,
+                  time: res.time,
+                  selectedChairs: res.selectedChairs
+                }))}
+              />
+              <ReservationForm
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                selectedChairs={selectedChairs}
+                onSubmit={handleSubmit}
+              />
+            </>
           )}
-          {selectedChairs.length > 0 && (
-            <ReservationForm
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              selectedChairs={selectedChairs}
-              onSubmit={handleSubmit}
-            />
-          )}
-        </VStack>
+        </Box>
       );
     } else {
       return (
-        <VStack spacing={6} align="stretch">
-          
-          <Reservations
-            selectedDate={format(viewDate, 'yyyy-MM-dd')}
-            reservations={reservations}
-            onDelete={handleDelete}
-          />
-        </VStack>
+        <Reservations
+          selectedDate={format(viewDate, 'yyyy-MM-dd')}
+          reservations={reservations}
+          onDelete={handleDelete}
+          onDateChange={handleDateChange}
+        />
       );
     }
   };
@@ -396,32 +406,25 @@ const ReservationSystem: React.FC = () => {
 
   return (
     <>
-      <Header 
-        isAuthenticated={isAuthenticated}
-        onLogout={handleLogout}
-      />
-      
-      {isAuthenticated ? (
-        <Box py={8}>
-          <Container maxW="container.xl">
-            <VStack spacing={8} align="stretch">
-              <Tabs index={activeTab} onChange={setActiveTab} variant="enclosed">
-                <TabList>
-                  <Tab>Make Reservation</Tab>
-                  <Tab>View Reservations</Tab>
-                </TabList>
-              </Tabs>
-              {renderContent()}
-            </VStack>
-          </Container>
-        </Box>
-      ) : (
-        <Box py={8}>
-          <Container maxW="container.xl">
-            <PinPad correctPin="1234" onSuccess={() => setIsAuthenticated(true)} />
-          </Container>
-        </Box>
-      )}
+      {isAuthenticated && <Header onLogout={handleLogout} />}
+      <Container maxW="container.xl" py={8}>
+        {!isAuthenticated ? (
+          <PinPad 
+            correctPin="1234" 
+            onSuccess={() => setIsAuthenticated(true)} 
+          />
+        ) : (
+          <VStack spacing={6} align="stretch">
+            <Tabs index={activeTab} onChange={setActiveTab} variant="enclosed">
+              <TabList>
+                <Tab>Make Reservation</Tab>
+                <Tab>View Reservations</Tab>
+              </TabList>
+            </Tabs>
+            {renderContent()}
+          </VStack>
+        )}
+      </Container>
     </>
   );
 };

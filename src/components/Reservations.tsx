@@ -11,6 +11,7 @@ import {
   SimpleGrid,
   Icon,
   Heading,
+  Input,
   Select,
   Button,
   useDisclosure,
@@ -35,17 +36,19 @@ interface ReservationsProps {
     name: string;
     phoneNumber: string;
     email?: string;
-    selectedChairs: string[];
     specialInstructions?: string;
+    selectedChairs: string[];
   }>;
   selectedDate: string;
   onDelete: (id: string) => void;
+  onDateChange: (date: string) => void;
 }
 
 const Reservations: React.FC<ReservationsProps> = ({ 
   selectedDate, 
   reservations, 
-  onDelete
+  onDelete,
+  onDateChange
 }) => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'upcoming' | 'past'>('all');
   const [selectedReservation, setSelectedReservation] = useState<string | null>(null);
@@ -102,6 +105,20 @@ const Reservations: React.FC<ReservationsProps> = ({
     onClose();
   };
 
+  const handlePreviousDay = () => {
+    const prevDay = subDays(parseISO(selectedDate), 1);
+    onDateChange(format(prevDay, 'yyyy-MM-dd'));
+  };
+
+  const handleNextDay = () => {
+    const nextDay = addDays(parseISO(selectedDate), 1);
+    onDateChange(format(nextDay, 'yyyy-MM-dd'));
+  };
+
+  const handleTodayClick = () => {
+    onDateChange(format(new Date(), 'yyyy-MM-dd'));
+  };
+
   return (
     <Box>
       {/* Header Section */}
@@ -115,7 +132,7 @@ const Reservations: React.FC<ReservationsProps> = ({
         borderColor={borderColor}
       >
         <VStack spacing={6} align="stretch">
-          {/* Date Navigation */}
+          {/* Date Selection */}
           <Flex 
             align="center" 
             justify="space-between"
@@ -125,47 +142,24 @@ const Reservations: React.FC<ReservationsProps> = ({
             borderWidth="1px"
             borderColor={borderColor}
           >
-            <ButtonGroup size="sm" spacing={4}>
-              <IconButton
-                aria-label="Previous day"
-                icon={<FiChevronLeft />}
-                variant="ghost"
-                colorScheme="blue"
-              />
-              <Button
-                leftIcon={<FiCalendar />}
-                variant="solid"
-                colorScheme="blue"
-              >
-                {format(parseISO(selectedDate), 'MMMM d, yyyy')}
-              </Button>
-              <IconButton
-                aria-label="Next day"
-                icon={<FiChevronRight />}
-                variant="ghost"
-                colorScheme="blue"
-              />
-            </ButtonGroup>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => onDateChange(e.target.value)}
+              max={format(addDays(new Date(), 30), 'yyyy-MM-dd')}
+              min={format(new Date(), 'yyyy-MM-dd')}
+              w="auto"
+            />
             <ButtonGroup size="sm" spacing={2}>
-              <Button
-                variant="outline"
-                colorScheme="blue"
-                size="sm"
-              >
-                Today
-              </Button>
               <Select 
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                width="auto"
-                minW="150px"
+                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'upcoming' | 'past')}
+                w="150px"
                 size="sm"
-                borderColor={borderColor}
-                _hover={{ borderColor: accentColor }}
               >
                 <option value="all">All Reservations</option>
-                <option value="upcoming">Upcoming Only</option>
-                <option value="past">Past Only</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="past">Past</option>
               </Select>
             </ButtonGroup>
           </Flex>
